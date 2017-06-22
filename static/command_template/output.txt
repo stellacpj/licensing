@@ -1,0 +1,49 @@
+#### ____share master interface route to vpn instance____ ####
+set routing-options rib-groups inet-vpn import-rib inet.0
+set routing-options rib-groups inet-vpn import-rib youku.inet.0
+set routing-options rib-groups inet-vpn import-rib iqiyi.inet.0
+set routing-options rib-groups inet-vpn import-rib vpnstatic.inet.0
+set routing-options interface-routes rib-group inet inet-vpn
+
+#### ____share master bgp route to vpn instance____ ####
+set protocols bgp group ibgp neighbor 14.14.14.1 family inet unicast rib-group inet-vpn
+set protocols bgp group ibgp neighbor 12.1.1.23 family inet unicast rib-group inet-vpn
+
+#### ____share vpn interface route to master instance____ ####
+set routing-options rib-groups youku-inet import-rib youku.inet.0
+set routing-options rib-groups youku-inet import-rib inet.0
+set routing-instances youku routing-options interface-routes rib-group inet youku-inet
+set routing-options rib-groups iqiyi-inet import-rib iqiyi.inet.0
+set routing-options rib-groups iqiyi-inet import-rib inet.0
+set routing-instances iqiyi routing-options interface-routes rib-group inet iqiyi-inet
+set routing-options rib-groups vpnstatic-inet import-rib vpnstatic.inet.0
+set routing-options rib-groups vpnstatic-inet import-rib inet.0
+set routing-instances vpnstatic routing-options interface-routes rib-group inet vpnstatic-inet
+
+#### ____config policy to access other vpn bgp route to instance rib____ ####
+set policy-options policy-statement vpn-policy term direct from protocol direct
+set policy-options policy-statement vpn-policy term direct then accept
+set policy-options policy-statement vpn-policy term youku-as from as-path youku-accept-as
+set policy-options policy-statement vpn-policy term youku-as then accept
+set policy-options as-path youku-accept-as ".65535"
+set policy-options policy-statement vpn-policy term iqiyi-as from as-path iqiyi-accept-as
+set policy-options policy-statement vpn-policy term iqiyi-as then accept
+set policy-options as-path iqiyi-accept-as ".65535"
+set routing-options rib-groups inet-vpn import-policy vpn-policy
+set policy-options policy-statement vpn-policy term last then reject
+
+#### ____share vpn instance bgp route to master instance____ ####
+set routing-instances youku protocols bgp group ebgp neighbor 12.12.12.2 family inet unicast rib-group youku-net
+set routing-instances iqiyi protocols bgp group ebgp neighbor 23.23.23.3 family inet unicast rib-group iqiyi-net
+set routing-instances vpnstatic protocols bgp group ebgp neighbor 12.12.12.12 family inet unicast rib-group vpnstatic-net
+
+#### ____static route scenario____ ####
+set routing-instances vpnstatic routing-options static route 172.27.10.1/24 next-hop 2.2.2.2
+set routing-instances vpnstatic static rib-group vpnstatic-inet
+
+#### ____export VPN static route to RR____ ####
+set policy-options policy-statement static-export term 1 from protocol static
+set policy-options policy-statement static-export term 1 from route-filter 172.27.10.1/24 exact
+set policy-options policy-statement static-export term 1 then accept
+set protocols bgp group ibgp neighbor 14.14.14.1 export static-export
+set protocols bgp group ibgp neighbor 12.1.1.23 export static-export

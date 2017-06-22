@@ -1,0 +1,54 @@
+# share master interface route to vpn instance:
+set routing-options rib-groups {{inet_vpn}} import-rib inet.0
+{% for row in rows_vpn -%}
+set routing-options rib-groups {{inet_vpn}} import-rib {{row.VPN_Name}}.inet.0
+{% endfor -%}
+{% for row in rows_vpnstatic -%}
+set routing-options rib-groups {{inet_vpn}} import-rib {{row.VPN_Static_Name}}.inet.0
+{% endfor -%}
+set routing-options interface-routes rib-group inet {{inet_vpn}}
+
+# share master bgp route to vpn instance:
+{% for row in rows_rr -%}
+set protocols bgp group ibgp neighbor {{row.Address}} family inet unicast rib-group {{inet_vpn}}
+{% endfor %}
+# share vpn interface route to master instance:
+{% for row in rows_vpn -%}
+set routing-options rib-groups {{row.VPN_Name}}-inet import-rib {{row.VPN_Name}}.inet.0
+set routing-options rib-groups {{row.VPN_Name}}-inet import-rib inet.0
+set routing-instances {{row.VPN_Name}} routing-options interface-routes rib-group inet {{row.VPN_Name}}-inet
+{% endfor -%}
+{% for row in rows_vpnstatic -%}
+set routing-options rib-groups {{row.VPN_Static_Name}}-inet import-rib {{row.VPN_Static_Name}}.inet.0
+set routing-options rib-groups {{row.VPN_Static_Name}}-inet import-rib inet.0
+set routing-instances {{row.VPN_Static_Name}} routing-options interface-routes rib-group inet {{row.VPN_Static_Name}}-inet
+{% endfor %}
+# config policy to access other vpn bgp route to instance rib:
+set policy-options policy-statement {{vpn_policy}} term direct from protocol direct
+set policy-options policy-statement {{vpn_policy}} term direct then accept
+{% for row in rows_vpn -%}
+set policy-options policy-statement {{vpn_policy}} term {{row.VPN_Name}}-as from as-path {{row.VPN_Name}}-accept-as
+set policy-options policy-statement {{vpn_policy}} term {{row.VPN_Name}}-as then accept
+set policy-options as-path {{row.VPN_Name}}-accept-as "{{row.VPN_Accept_AS_PATH}}"
+{% endfor -%}
+set routing-options rib-groups {{inet_vpn}} import-policy {{vpn_policy}}
+set policy-options policy-statement {{vpn_policy}} term last then reject
+
+# share vpn instance bgp route to master instance:
+{% for row in rows_vpn -%}
+set routing-instances {{row.VPN_Name}} protocols bgp group ebgp neighbor {{row.Peer_Neighbor}} family inet unicast rib-group {{row.VPN_Name}}-net
+{% endfor %}
+# static scenario:
+{% for row in rows_vpnstatic -%}
+set routing-instances {{row.VPN_Static_Name}} routing-options static route {{row.Static_Route}} next-hop {{row.Next_Hop}}
+set routing-instances {{row.VPN_Static_Name}} static rib-group {{row.VPN_Static_Name}}-inet
+{% endfor %}
+# export VPN static route to RR
+{% for row in rows_vpnstatic -%}
+set policy-options policy-statement static-export term 1 from protocol static
+set policy-options policy-statement static-export term 1 from route-filter {{row.Static_Route}} exact
+set policy-options policy-statement static-export term 1 then accept
+{% endfor -%}
+{% for row in rows_rr -%}
+set protocols bgp group ibgp neighbor {{row.Address}} export static-export
+{% endfor %}

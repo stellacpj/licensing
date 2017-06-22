@@ -1,0 +1,64 @@
+# -*- coding: utf-8 -*-
+# 嘗試如
+import os
+from jinja2 import Environment, FileSystemLoader
+from collections import namedtuple
+RR_setting = namedtuple("RR_setting","Name Address");
+VPN_setting = namedtuple("VPN_setting", "Name AcceptASPath PeerNeighbor");
+
+TEMPLATE_ENVIRONMENT = Environment(
+    autoescape=False,
+    loader=FileSystemLoader(os.path.join('/root/theportal/applications/DrPeng/static', 'command_template')),
+    trim_blocks=False)
+
+def render_template(template_filename, context):
+    return TEMPLATE_ENVIRONMENT.get_template(template_filename).render(context)
+
+def create_commands(rows_rr,rows_vpn):
+    inet_vpn = 'inet-vpn';
+    vpn_policy = 'vpn-policy';
+    context = {
+        'inet_vpn':inet_vpn,
+        'vpn_policy':vpn_policy,
+        'rows_vpn':rows_vpn,
+        "rows_rr":rows_rr
+    }
+    #
+    with open('/root/theportal/applications/DrPeng/static/command_template/output.txt', 'w') as f:
+        command_set = render_template('command_template.txt', context);
+        f.write(command_set);
+    return command_set
+
+@auth.requires_login()
+def preview_config():
+    rows_rr=db(db.RouteReflector_conf).select();
+    rows_vpn=db(db.VPN.Configuration_To_Be_Deployed == True).select();
+
+    commands = create_commands(rows_rr,rows_vpn).replace("\n", "\\n").replace("\"","\\\""); #processing the data for \n can behave normally in textarea.
+    return dict(commands=commands);
+
+@auth.requires_login()
+def index():
+    return dict();
+
+@auth.requires_login()
+def RouteReflector_conf():
+    form = SQLFORM.grid(db.RouteReflector_conf,
+                   searchable=False,
+                    create=True,
+                    editable=True,
+                    details=False,
+                    deletable=True
+                    );
+    return dict();
+
+@auth.requires_login()
+def VPN():
+    form = SQLFORM.grid(db.VPN,
+                   searchable=False,
+                    create=True,
+                    editable=True,
+                    details=False,
+                    deletable=True
+                    );
+    return dict(form=form);

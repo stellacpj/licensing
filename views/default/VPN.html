@@ -1,0 +1,20 @@
+{{extend 'layout.html'}}
+<h3>Manage VPN Settings</h3>
+{{=BEAUTIFY(response._vars)}}
+
+<h1>
+</h1>
+<div>
+<a href="{{=URL('default','VPN_static')}}"><button>Go to VPN_static settings</button></a>
+</div>
+<h1>
+</h1>
+
+<div>
+<a href="{{=URL('default','RouteReflector_conf')}}"><button>Go to Route Reflector settings</button></a>
+</div>
+<h1>
+</h1>
+<div>
+<a href="{{=URL('default','preview_config')}}"><button>Go to Generate and Export</button></a>
+</div>

@@ -1,0 +1,18 @@
+{{extend 'layout.html'}}
+{{=BEAUTIFY(response._vars)}}
+<h1>
+    Welcome to Dr.Peng's command generating tool.
+</h1>
+<div>
+<a href="{{=URL('VPN_RR','VPN_new')}}"><button>VPN settings</button></a>
+</div>
+<h1>
+</h1>
+<div>
+<a href="{{=URL('VPN_RR','RouteReflector_conf')}}"><button>Route Reflector settings</button></a>
+</div>
+<h1>
+</h1>
+<div>
+<a href="{{=URL('VPN_RR','VPN')}}"><button>Preview and Export</button></a>
+</div>

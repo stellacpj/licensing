@@ -1,0 +1,28 @@
+{{extend 'layout.html'}}
+{{=BEAUTIFY(response._vars)}}
+
+
+<h1>
+    Junos Cli Commands:
+</h1>
+
+<textarea id=command_preview readonly rows="25" cols="100">
+</textarea>
+
+<script type="text/javascript">
+$(document).ready(function(){
+    document.getElementById("command_preview").value = "{{=XML(commands)}}";
+});
+</script>
+
+<a href="{{=URL('static/command_template','output.txt')}}" download="output.txt"><button>Export</button></a>
+<h2>
+
+</h2>
+<a href="{{=URL('VPN_RR','VPN')}}"><button>Go to VPN settings</button></a>
+<a href="{{=URL('VPN_RR','RouteReflector_conf')}}"><button>Go to RR settings</button></a>
+<a href="{{=URL('VPN_RR','index')}}"><button>Go to index page</button></a>
+<h1>
+</h1>
+<h1>
+</h1>

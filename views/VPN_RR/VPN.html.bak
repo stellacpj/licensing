@@ -1,0 +1,14 @@
+{{extend 'layout.html'}}
+{{=BEAUTIFY(response._vars)}}
+
+<h1>
+</h1>
+
+<div>
+<a href="{{=URL('test_controller','RouteReflector_conf')}}"><button>Go to Route Reflector settings</button></a>
+</div>
+<h1>
+</h1>
+<div>
+<a href="{{=URL('test_controller','preview_config')}}"><button>Go to Preview and Export</button></a>
+</div>
